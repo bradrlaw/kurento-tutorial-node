@@ -16,8 +16,6 @@
  */
 
 var signalServer = "https://" + location.host.split(":")[0] + ":9000/";
-
-//var socket = io(signalServer);
 var socket;
 
 var video;
@@ -73,30 +71,6 @@ window.onbeforeunload = function() {
     socket.disconnect();
 }
 
-
-/*
-ws.onmessage = function(message) {
-	var parsedMessage = JSON.parse(message.data);
-	console.info('Received message: ' + message.data);
-
-	switch (parsedMessage.id) {
-	case 'presenterResponse':
-		presenterResponse(parsedMessage);
-		break;
-	case 'viewerResponse':
-		viewerResponse(parsedMessage);
-		break;
-	case 'stopCommunication':
-		dispose();
-		break;
-	case 'iceCandidate':
-		webRtcPeer.addIceCandidate(parsedMessage.candidate)
-		break;
-	default:
-		console.error('Unrecognized message', parsedMessage);
-	}
-} */
-
 function presenterResponse(message) {
 	if (message.response != 'accepted') {
 		var errorMsg = message.message ? message.message : 'Unknow error';
@@ -118,7 +92,12 @@ function viewerResponse(message) {
 }
 
 function presenter() {
-	if (!webRtcPeer) {
+    if (!webRtcPeer) {
+        var cameraName = document.getElementById("cameraName").value.trim();
+        if (cameraName == "") {
+            alert("Please enter a camera name!");
+            return;
+        }
 		showSpinner(video);
 
 		var options = {
@@ -141,11 +120,21 @@ function onOfferPresenter(error, offerSdp) {
 		id : 'presenter',
 		sdpOffer : offerSdp
 	};
-	sendMessage(message);
+
+	var cameraName = document.getElementById("cameraName").value.trim();
+	socket.emit('join', cameraName, function (err, roomDescription) {
+	    console.log("Presenting as cameraName: " + cameraName);
+	    sendMessage(message);
+	});
 }
 
 function viewer() {
-	if (!webRtcPeer) {
+    if (!webRtcPeer) {
+        var cameraName = document.getElementById("cameraName").value.trim();
+        if (cameraName == "") {
+            alert("Please enter a camera name!");
+            return;
+        }
 		showSpinner(video);
 
 		var options = {
@@ -168,7 +157,11 @@ function onOfferViewer(error, offerSdp) {
 		id : 'viewer',
 		sdpOffer : offerSdp
 	}
-	sendMessage(message);
+	var cameraName = document.getElementById("cameraName").value.trim();
+	socket.emit('join', cameraName, function (err, roomDescription) {
+	    console.log("Connecting to cameraName: " + cameraName);
+	    sendMessage(message);
+	});
 }
 
 function onIceCandidate(candidate) {
@@ -202,7 +195,6 @@ function dispose() {
 function sendMessage(message) {
 	var jsonMessage = JSON.stringify(message);
 	console.log('Sending message: ' + jsonMessage);
-    //ws.send(jsonMessage);
 	socket.emit('message', jsonMessage);
 }
 
