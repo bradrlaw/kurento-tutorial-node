@@ -15,10 +15,10 @@
  *
  */
 
-var signalServer = location.host.split(":")[0] + ":9000/";
+var signalServer = "https://" + location.host.split(":")[0] + ":9000/socket.io/socket.io.js";
 
-console.log("Connecting to signal server: " + signalServer)
-var socket = io(signalServer);
+//var socket = io(signalServer);
+var socket;
 
 var video;
 var webRtcPeer;
@@ -30,6 +30,40 @@ window.onload = function() {
 	document.getElementById('call').addEventListener('click', function() { presenter(); } );
 	document.getElementById('viewer').addEventListener('click', function() { viewer(); } );
 	document.getElementById('terminate').addEventListener('click', function () { stop(); });
+
+    // dynamically load the signal.io.js library so its not hardcoded in index.html
+	var script = document.createElement("script");
+	script.type = "text/javascript";
+	script.src = signalServer;
+	script.async = false;
+	script.onload = function () {
+	    console.log("Connecting to signal server: " + signalServer)
+
+	    socket = io(signalServer);
+
+	    socket.on("message", function (msg) {
+	        var parsedMessage = JSON.parse(msg);
+	        console.info("Received message: " + msg);
+
+	        switch (parsedMessage.id) {
+	            case 'presenterResponse':
+	                presenterResponse(parsedMessage);
+	                break;
+	            case 'viewerResponse':
+	                viewerResponse(parsedMessage);
+	                break;
+	            case 'stopCommunication':
+	                dispose();
+	                break;
+	            case 'iceCandidate':
+	                webRtcPeer.addIceCandidate(parsedMessage.candidate)
+	                break;
+	            default:
+	                console.error('Unrecognized message', parsedMessage);
+	        }
+	    });
+	};
+	document.body.appendChild(script);
 }
 
 window.onbeforeunload = function() {
@@ -38,28 +72,6 @@ window.onbeforeunload = function() {
     console.log("Disconnecting from signal server");
     socket.disconnect();
 }
-
-socket.on("message", function (msg) {
-    var parsedMessage = JSON.parse(msg);
-    console.info("Received message: " + msg);
-
-    switch (parsedMessage.id) {
-        case 'presenterResponse':
-            presenterResponse(parsedMessage);
-            break;
-        case 'viewerResponse':
-            viewerResponse(parsedMessage);
-            break;
-        case 'stopCommunication':
-            dispose();
-            break;
-        case 'iceCandidate':
-            webRtcPeer.addIceCandidate(parsedMessage.candidate)
-            break;
-        default:
-            console.error('Unrecognized message', parsedMessage);
-    }
-});
 
 
 /*
