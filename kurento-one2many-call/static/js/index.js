@@ -15,10 +15,11 @@
  *
  */
 
-var signalServer = "https://mediaserver.butterflymx.com:9000";
+var signalServer = location.host.split(":")[0] + ":9000/";
 
-//var ws = new WebSocket('wss://' + location.host + '/one2many');
-var socket = new io.Socket();
+console.log("Connecting to signal server: " + signalServer)
+var socket = io(signalServer);
+
 var video;
 var webRtcPeer;
 
@@ -29,18 +30,39 @@ window.onload = function() {
 	document.getElementById('call').addEventListener('click', function() { presenter(); } );
 	document.getElementById('viewer').addEventListener('click', function() { viewer(); } );
 	document.getElementById('terminate').addEventListener('click', function () { stop(); });
-
-    // connect to signal server
-	console.log("Connecting to: " + signalServer)
-	socket.connect(signalServer);
 }
 
 window.onbeforeunload = function() {
-    //ws.close();
+
     // disconnect from server
+    console.log("Disconnecting from signal server");
     socket.disconnect();
 }
 
+socket.on("message", function (msg) {
+    var parsedMessage = JSON.parse(msg);
+    console.info("Received message: " + msg);
+
+    switch (parsedMessage.id) {
+        case 'presenterResponse':
+            presenterResponse(parsedMessage);
+            break;
+        case 'viewerResponse':
+            viewerResponse(parsedMessage);
+            break;
+        case 'stopCommunication':
+            dispose();
+            break;
+        case 'iceCandidate':
+            webRtcPeer.addIceCandidate(parsedMessage.candidate)
+            break;
+        default:
+            console.error('Unrecognized message', parsedMessage);
+    }
+});
+
+
+/*
 ws.onmessage = function(message) {
 	var parsedMessage = JSON.parse(message.data);
 	console.info('Received message: ' + message.data);
@@ -61,7 +83,7 @@ ws.onmessage = function(message) {
 	default:
 		console.error('Unrecognized message', parsedMessage);
 	}
-}
+} */
 
 function presenterResponse(message) {
 	if (message.response != 'accepted') {
@@ -167,8 +189,9 @@ function dispose() {
 
 function sendMessage(message) {
 	var jsonMessage = JSON.stringify(message);
-	console.log('Senging message: ' + jsonMessage);
-	ws.send(jsonMessage);
+	console.log('Sending message: ' + jsonMessage);
+    //ws.send(jsonMessage);
+	socket.emit('message', jsonMessage);
 }
 
 function showSpinner() {
@@ -185,6 +208,7 @@ function hideSpinner() {
 		arguments[i].style.background = '';
 	}
 }
+
 
 /**
  * Lightbox utility (to display media pipeline image in a modal dialog)

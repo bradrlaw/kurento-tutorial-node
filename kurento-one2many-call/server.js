@@ -27,28 +27,39 @@ var https = require('https');
 var argv = minimist(process.argv.slice(2), {
     default: {
         as_uri: 'https://localhost:8443/',
-        ws_uri: 'ws://localhost:8888/kurento'
+        ws_uri: 'ws://localhost:8888/kurento',
+        dev: false
     }
 });
 
-var options =
-{
-    key: fs.readFileSync('keys/privkey.pem'),
-    cert: fs.readFileSync('keys/fullchain.pem'),
-    ca: fs.readFileSync('keys/chain.pem')
-};
+var options;
+if (argv.dev == false) {
+    options = {
+        key: fs.readFileSync('keys/privkey.pem'),
+        cert: fs.readFileSync('keys/fullchain.pem'),
+        ca: fs.readFileSync('keys/chain.pem')
+    };
+} else {
+    argv.as_uri = "https://mediaserver.butterflymx.com:8443/";
+    options = {
+        key: fs.readFileSync('keys/server.key'),
+        cert: fs.readFileSync('keys/server.crt')
+    };
+}
 
 var app = express();
 
 /*
  * Definition of global variables.
  */
+/*
 var idCounter = 0;
 var candidatesQueue = {};
 var kurentoClient = null;
 var presenter = null;
 var viewers = [];
 var noPresenterMessage = 'No active presenter. Try again later...';
+*/
 
 /*
  * Server startup
@@ -60,19 +71,17 @@ var server = https.createServer(options, app).listen(port, function() {
     console.log('Open ' + url.format(asUrl) + ' with a WebRTC capable browser');
 });
 
-var wss = new ws.Server({
-    server : server,
-    path : '/one2many'
-});
-
+/*
 function nextUniqueId() {
 	idCounter++;
 	return idCounter.toString();
 }
+*/
 
 /*
  * Management of WebSocket messages
  */
+/*
 wss.on('connection', function(ws) {
 
 	var sessionId = nextUniqueId();
@@ -145,13 +154,14 @@ wss.on('connection', function(ws) {
         }
     });
 });
+*/
 
 /*
  * Definition of functions
  */
 
 // Recover kurentoClient for the first time.
-function getKurentoClient(callback) {
+/* function getKurentoClient(callback) {
     if (kurentoClient !== null) {
         return callback(null, kurentoClient);
     }
@@ -374,6 +384,6 @@ function onIceCandidate(sessionId, _candidate) {
         }
         candidatesQueue[sessionId].push(candidate);
     }
-}
+} */
 
 app.use(express.static(path.join(__dirname, 'static')));
