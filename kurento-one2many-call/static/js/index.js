@@ -15,7 +15,7 @@
  *
  */
 
-var signalServer = "https://" + location.host.split(":")[0] + ":9000/socket.io/socket.io.js";
+var signalServer = "https://" + location.host.split(":")[0] + ":9000/";
 
 //var socket = io(signalServer);
 var socket;
@@ -34,7 +34,7 @@ window.onload = function() {
     // dynamically load the signal.io.js library so its not hardcoded in index.html
 	var script = document.createElement("script");
 	script.type = "text/javascript";
-	script.src = signalServer;
+	script.src = signalServer + 'socket.io/socket.io.js';
 	script.async = false;
 	script.onload = function () {
 	    console.log("Connecting to signal server: " + signalServer)
