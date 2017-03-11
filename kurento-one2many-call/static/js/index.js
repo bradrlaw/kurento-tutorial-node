@@ -15,7 +15,10 @@
  *
  */
 
-var ws = new WebSocket('wss://' + location.host + '/one2many');
+var signalServer = "https://mediaserver.butterflymx.com:9000";
+
+//var ws = new WebSocket('wss://' + location.host + '/one2many');
+var socket = new io.Socket();
 var video;
 var webRtcPeer;
 
@@ -25,11 +28,17 @@ window.onload = function() {
 
 	document.getElementById('call').addEventListener('click', function() { presenter(); } );
 	document.getElementById('viewer').addEventListener('click', function() { viewer(); } );
-	document.getElementById('terminate').addEventListener('click', function() { stop(); } );
+	document.getElementById('terminate').addEventListener('click', function () { stop(); });
+
+    // connect to signal server
+	console.log("Connecting to: " + signalServer)
+	socket.connect(signalServer);
 }
 
 window.onbeforeunload = function() {
-	ws.close();
+    //ws.close();
+    // disconnect from server
+    socket.disconnect();
 }
 
 ws.onmessage = function(message) {
