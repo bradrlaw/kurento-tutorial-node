@@ -101,9 +101,15 @@ function presenter() {
 		showSpinner(video);
 
 		var options = {
-			localVideo: video,
-			onicecandidate : onIceCandidate
-	    }
+		    localVideo: video,
+		    onicecandidate: onIceCandidate,
+		    configuration: {
+		        iceServers: [
+                { "urls": "turn:54.83.10.15", "username": "test", "credential": "test" },
+                { "urls": "stun:54.83.10.15:3478" }
+		        ]
+		    }
+		}
 
 		webRtcPeer = kurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options, function(error) {
 			if(error) return onError(error);
@@ -139,7 +145,13 @@ function viewer() {
 
 		var options = {
 			remoteVideo: video,
-			onicecandidate : onIceCandidate
+			onicecandidate: onIceCandidate,
+            configuration: {
+			    iceServers: [ 
+                    { "urls": "stun:54.83.10.15:3478" } ,
+                    { "urls": "turn:54.83.10.15","username":"test","credential":"test"}
+			    ]
+            }
 		}
 
 		webRtcPeer = kurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options, function(error) {
